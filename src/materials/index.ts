@@ -1,5 +1,3 @@
-import { install } from "./text"
-
 export const categories = [
   {
     title: '图表',
@@ -12,9 +10,7 @@ export const categories = [
     key: 'info',
   },
 ]
-
 export const materials = []
-
 /**
  * 获取所有分类
  * @returns 分类
@@ -40,5 +36,10 @@ export function registerMaterials(material) {
   materials.push(material)
 
 }
-install(registerMaterials)
+
+const materialModules = import.meta.glob('./*/index.ts', { eager: true })
+Object.values(materialModules).forEach((module) => {
+  // @ts-expect-error 忽略类型错误
+  module.install(registerMaterials)
+})
 
