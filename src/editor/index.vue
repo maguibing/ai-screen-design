@@ -12,7 +12,7 @@
       ></MaterialPanel>
       <LayerPanel :style="{ width: layerWidth }" class="overflow-hidden border-r border-[#293447]">
       </LayerPanel>
-      <div class="canvas flex-1 border-r border-[#293447]">画布</div>
+      <CanvasRoot class="canvas flex-1 border-r border-[#293447]" />
       <aside :style="{ width: propertiesWidth }" class="overflow-hidden">属性</aside>
     </main>
   </div>
@@ -23,6 +23,7 @@ import ToolbarLeft from './toolbar/ToolbarLeft.vue'
 import ToolbarRight from './toolbar/ToolbarRight.vue'
 import MaterialPanel from './panels/material/index.vue'
 import LayerPanel from './panels/layer/index.vue'
+import CanvasRoot from './canvas/index.vue'
 import { useEditorStore } from '@/stores/editor'
 const editorStore = useEditorStore()
 

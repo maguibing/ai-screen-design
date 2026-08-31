@@ -25,7 +25,7 @@ defineOptions({
   name: 'MaterialPanel',
 })
 
-const activeCategory = ref('chart')
+const activeCategory = ref('info')
 
 const categories = computed(() => {
   return getCategories()

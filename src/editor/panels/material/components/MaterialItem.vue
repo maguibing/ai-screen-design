@@ -1,5 +1,5 @@
 <template>
-  <div class="material-item">
+  <div class="material-item" draggable="true" @dragstart="handleDragStart">
     <div class="title">{{ material.title }}</div>
     <div class="cover">{{ material.cover }}</div>
   </div>
@@ -10,7 +10,11 @@ defineOptions({
   name: 'MaterialItem',
 })
 
-defineProps(['material'])
+const props = defineProps(['material'])
+
+const handleDragStart = (event: DragEvent) => {
+  event.dataTransfer?.setData('schema', JSON.stringify(props.material?.schema ?? {}))
+}
 </script>
 
 <style scoped lang="scss">

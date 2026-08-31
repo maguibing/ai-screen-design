@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 
 export const useEditorStore = defineStore('editor', () => {
   const panelIsVisible = ref(true)
@@ -16,5 +16,55 @@ export const useEditorStore = defineStore('editor', () => {
     propertiesIsVisible.value = !propertiesIsVisible.value
   }
 
-  return { panelIsVisible, layerIsVisible, propertiesIsVisible, togglePanel, toggleLayer, toggleProperties }
+
+  const nodes = ref([])
+
+  const selectedNodeIds = ref([])
+  const selectedNodeId = computed(() => {
+    return selectedNodeIds.value.length > 0 ? selectedNodeIds.value[0] : null
+  })
+
+  const selectedNode = computed(() => {
+    return nodes.value.find((node) => node.id === selectedNodeId.value)
+  })
+
+
+  function addNode(node) {
+    nodes.value.push(node)
+  }
+
+  function clearSelected() {
+    selectedNodeIds.value = []
+  }
+
+  function selectNode(id) {
+    selectedNodeIds.value = [id]
+  }
+
+  function selectNodes(ids) {
+    selectedNodeIds.value = ids
+  }
+
+
+  function findNode(id) {
+    return nodes.value.find((node) => node.id === id)
+  }
+
+  return {
+    clearSelected,
+    panelIsVisible,
+    layerIsVisible,
+    propertiesIsVisible,
+    togglePanel,
+    toggleLayer,
+    toggleProperties,
+    nodes,
+    selectedNodeId,
+    selectedNodeIds,
+    selectedNode,
+    addNode,
+    selectNode,
+    selectNodes,
+    findNode,
+  }
 })
