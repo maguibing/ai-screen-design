@@ -1,24 +1,47 @@
 <template>
-  <div class="canvas-root">
-    <div
-      ref="stageRef"
-      class="canvas-stage"
-      @dragover.prevent
-      @drop="handleDrop"
-      @mousedown.self="onClearSelected"
+  <div class="canvas-root" ref="canvasRoot">
+    <SketchRuler
+      :palette="{
+        bgColor: '#1f2937',
+        longfgColor: '#6b7280',
+        fontColor: '#9ca3af',
+        fontShadowColor: '#0e8da7',
+        shadowColor: 'rgba(14,141,167,0.14)',
+        lineColor: '#22c55e',
+        lineType: 'solid',
+        lockLineColor: '#4b5563',
+        borderColor: '#374151',
+        hoverBg: '#111827',
+        hoverColor: '#ffffff',
+      }"
+      :canvas-height="canvasHeight"
+      :canvas-width="canvasWidth"
+      :width="rectWidth"
+      :height="rectHeight"
+      :lines="lines"
+      v-model:scale="scale"
+      @zoomchange="onZoomChange"
     >
       <div
-        class="canvas-node"
-        :data-node-id="node.id"
-        v-for="node in nodes"
-        :key="node.id"
-        :style="getNodeStyle(node)"
-        @mousedown="onSelect(node, $event)"
+        ref="stageRef"
+        class="canvas-stage"
+        :style="canvasStyle"
+        @dragover.prevent
+        @drop="handleDrop"
+        @mousedown.self="onClearSelected"
       >
-        <component :is="getMaterialComponent(node.type)" :schema="node" />
+        <div
+          class="canvas-node"
+          :data-node-id="node.id"
+          v-for="node in nodes"
+          :key="node.id"
+          :style="getNodeStyle(node)"
+          @mousedown="onSelect(node, $event)"
+        >
+          <component :is="getMaterialComponent(node.type)" :schema="node" />
+        </div>
       </div>
-    </div>
-
+    </SketchRuler>
     <Moveable
       ref="moveableRef"
       :target="selectedTarget"
@@ -47,8 +70,11 @@
 import { useEditorStore } from '@/stores/editor'
 import Moveable from 'vue3-moveable'
 import { VueSelecto } from 'vue3-selecto'
+import SketchRuler from 'vue3-sketch-ruler'
+import 'vue3-sketch-ruler/lib/style.css'
 import { storeToRefs } from 'pinia'
 import { getMaterialComponent, createNode } from '@/materials'
+import { debounce } from '@/utils'
 defineOptions({
   name: 'CanvasRoot',
 })
@@ -56,9 +82,29 @@ defineOptions({
 const editorStore = useEditorStore()
 const { nodes } = storeToRefs(editorStore)
 
+const rectWidth = ref(0)
+const rectHeight = ref(0)
+const scale = ref(1)
+
+const canvasWidth = ref(1920)
+const canvasHeight = ref(1080)
+
+const canvasStyle = computed(() => {
+  return {
+    width: canvasWidth.value + 'px',
+    height: canvasHeight.value + 'px',
+  }
+})
+
+const lines = ref({
+  h: [],
+  v: [],
+})
+
 const selectedTarget = shallowRef(null)
 const moveableRef = ref(null)
 const stageRef = ref(null)
+const canvasRoot = ref(null)
 
 /**
  * 处理拖拽
@@ -177,16 +223,49 @@ const onSelectend = (event) => {
   const ids = event.selected.map((node) => node.getAttribute('data-node-id'))
   editorStore.selectNodes(ids)
 }
+
+/**
+ * 画布根节点缩放
+ * @param rect 矩形
+ */
+const onRootResize = debounce((rect) => {
+  rectWidth.value = rect.width
+  rectHeight.value = rect.height
+}, 300)
+
+/**
+ * 缩放变化
+ * @param event 事件
+ */
+const onZoomChange = () => {
+  moveableRef.value.updateRect()
+}
+
+onMounted(() => {
+  // 获取画布尺寸
+  const { width, height } = canvasRoot.value.getBoundingClientRect()
+  rectWidth.value = width
+  rectHeight.value = height
+
+  const observer = new ResizeObserver((entries) => {
+    const entry = entries[0]
+    const rect = entry.contentRect
+    onRootResize(rect)
+  })
+
+  observer.observe(canvasRoot.value)
+
+  onUnmounted(() => {
+    observer.disconnect()
+  })
+})
 </script>
 
 <style scoped lang="scss">
 .canvas-root {
   .canvas-stage {
     position: relative;
-    width: 900px;
-    height: 600px;
-    margin: 100px auto;
-    background-color: #222c40;
+    background-color: #131822;
 
     .canvas-node {
       position: absolute;
