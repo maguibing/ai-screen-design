@@ -33,9 +33,9 @@
         <div
           class="canvas-node"
           :data-node-id="node.id"
-          v-for="node in nodes"
+          v-for="(node, index) in nodes"
           :key="node.id"
-          :style="getNodeStyle(node)"
+          :style="getNodeStyle(node, index)"
           @mousedown="onSelect(node, $event)"
         >
           <component :is="getMaterialComponent(node.type)" :schema="node" />
@@ -80,7 +80,7 @@ defineOptions({
 })
 
 const editorStore = useEditorStore()
-const { nodes } = storeToRefs(editorStore)
+const { nodes, selectedNodeIds } = storeToRefs(editorStore)
 
 const rectWidth = ref(0)
 const rectHeight = ref(0)
@@ -101,10 +101,18 @@ const lines = ref({
   v: [],
 })
 
-const selectedTarget = shallowRef(null)
+const selectedTarget = shallowRef([])
 const moveableRef = ref(null)
 const stageRef = ref(null)
 const canvasRoot = ref(null)
+
+watch(
+  selectedNodeIds,
+  (ids) => {
+    selectedTarget.value = ids.map((id) => stageRef.value.querySelector(`[data-node-id="${id}"]`))
+  },
+  { deep: true, flush: 'post' },
+)
 
 /**
  * 处理拖拽
@@ -119,10 +127,6 @@ const handleDrop = (event: DragEvent) => {
 
   editorStore.addNode(node)
   editorStore.selectNode(node.id)
-
-  nextTick(() => {
-    selectedTarget.value = document.querySelector(`[data-node-id="${node.id}"]`)
-  })
 }
 
 /**
@@ -130,12 +134,13 @@ const handleDrop = (event: DragEvent) => {
  * @param node 节点
  * @returns 节点样式
  */
-const getNodeStyle = (node) => {
+const getNodeStyle = (node, index) => {
   return {
     width: node.layout.width + 'px',
     height: node.layout.height + 'px',
     left: node.layout.x + 'px',
     top: node.layout.y + 'px',
+    zIndex: index + 1,
   }
 }
 
@@ -146,7 +151,6 @@ const getNodeStyle = (node) => {
  */
 const onSelect = (node, e) => {
   editorStore.selectNode(node.id)
-  selectedTarget.value = e.currentTarget
 
   nextTick(() => {
     moveableRef.value.dragStart(e)
@@ -219,7 +223,6 @@ const onClearSelected = () => {
  * @param event 事件
  */
 const onSelectend = (event) => {
-  selectedTarget.value = event.selected
   const ids = event.selected.map((node) => node.getAttribute('data-node-id'))
   editorStore.selectNodes(ids)
 }
